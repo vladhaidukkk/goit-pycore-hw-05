@@ -3,3 +3,10 @@
 - **Tier:** 1
 - **Discipline:** Python Programming: Foundations and Best Practices
 - **Homework:** 3
+
+## Getting Started
+
+Run a specific task using the command below:
+```shell
+python -m tasks.task{N}
+```
