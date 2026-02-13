@@ -13,5 +13,5 @@ python -m tasks.task{N}
 
 Run bot using the command below:
 ```shell
-python -m tasks.bot
+python -m bot
 ```
