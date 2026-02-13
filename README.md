@@ -6,7 +6,12 @@
 
 ## Getting Started
 
-Run a specific task using the command below:
+Run a specific task (1-3) using the command below:
 ```shell
 python -m tasks.task{N}
+```
+
+Run bot using the command below:
+```shell
+python -m tasks.bot
 ```
