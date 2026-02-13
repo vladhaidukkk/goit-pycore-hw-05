@@ -1,7 +1,6 @@
 import re
 import sys
 from collections import Counter
-from datetime import date, datetime, time
 from enum import StrEnum
 from pathlib import Path
 from typing import NamedTuple
@@ -15,8 +14,8 @@ class LogLevel(StrEnum):
 
 
 class Log(NamedTuple):
-    date: date
-    time: time
+    date: str
+    time: str
     level: LogLevel
     message: str
 
@@ -26,19 +25,21 @@ def parse_log_line(line: str) -> Log:
     line = line.strip()
 
     # Step 2: Find log entities
-    timestamp_pattern = r"\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}"
+    date_pattern = r"\d{4}-\d{2}-\d{2}"
+    time_pattern = r"\d{2}:\d{2}:\d{2}"
     level_pattern = "|".join(level.value for level in LogLevel)
-    match = re.match(rf"({timestamp_pattern}) ({level_pattern}) (.+)", line)
+    match = re.match(rf"({date_pattern}) ({time_pattern}) ({level_pattern}) (.+)", line)
 
     # Step 3: Extract log entities
-    timestamp = datetime.strptime(match.group(1), "%Y-%m-%d %H:%M:%S")
-    level = match.group(2)
-    message = match.group(3)
+    raw_date = match.group(1)
+    raw_time = match.group(2)
+    level = match.group(3)
+    message = match.group(4)
 
     # Step 4: Construct & return log record
     return Log(
-        date=timestamp.date,
-        time=timestamp.time,
+        date=raw_date,
+        time=raw_time,
         level=level,
         message=message,
     )
@@ -89,9 +90,13 @@ def main():
     encoding = "utf-8"
     try:
         logs = load_logs(path_arg, encoding=encoding)
-        logs = filter_logs_by_level(logs, level_arg) if level_arg else logs
         log_counts = count_logs_by_level(logs)
         display_log_counts(log_counts)
+
+        if level_arg:
+            print(f"\nДеталі логів для рівня '{level_arg}':")
+            for log in filter_logs_by_level(logs, level_arg):
+                print(f"{log.date} {log.time} - {log.message}")
     except FileNotFoundError:
         print(f"File '{path_arg}' was not found")
     except IsADirectoryError:
