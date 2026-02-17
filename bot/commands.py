@@ -18,12 +18,6 @@ class ForbiddenCommandArgumentError(CommandError):
     pass
 
 
-class InvalidCommandArgumentsError(CommandError):
-    def __init__(self, message: str, *, expected_args: list[str]) -> None:
-        self.expected_args = expected_args
-        super().__init__(message)
-
-
 CommandArgs = tuple[str, ...]
 CommandContext = dict[str, Any]
 
@@ -31,25 +25,21 @@ CommandContext = dict[str, Any]
 class Command(NamedTuple):
     name: str
     func: Callable
-    expected_args: list[str]
 
 
 class CommandsRegistry:
     def __init__(self) -> None:
         self._commands_registry: dict[str, Command] = {}
 
-    def register(self, *command_names: str, args: list[str] | None = None) -> Callable:
+    def register(self, *command_names: str) -> Callable:
         def decorator(func: Callable) -> Callable:
             for name in command_names:
                 if name in self._commands_registry:
                     raise CommandAlreadyExistsError(
                         f"Command '{name}' is already registered."
                     )
-                self._commands_registry[name] = Command(
-                    name=name,
-                    func=func,
-                    expected_args=args or [],
-                )
+                self._commands_registry[name] = Command(name=name, func=func)
+
             return func
 
         return decorator
@@ -72,11 +62,6 @@ class CommandsRegistry:
 
             # Check args quantity & inject them
             if param_type == CommandArgs:
-                if command.expected_args and len(command.expected_args) != len(args):
-                    raise InvalidCommandArgumentsError(
-                        f"Command '{command_name}' expects {len(command.expected_args)} args",
-                        expected_args=command.expected_args,
-                    )
                 command_args[param_name] = args
 
             # Inject context

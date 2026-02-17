@@ -1,12 +1,28 @@
 import sys
+from functools import wraps
+from typing import Callable
 
 from bot.commands import (
     CommandArgs,
     CommandContext,
     CommandNotFoundError,
     CommandsRegistry,
-    InvalidCommandArgumentsError,
 )
+
+
+def input_error(*, error_msg: str) -> Callable:
+    def decorator(func: Callable) -> Callable:
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            try:
+                return func(*args, **kwargs)
+            except (ValueError, IndexError, KeyError):
+                print(error_msg)
+
+        return wrapper
+
+    return decorator
+
 
 commands = CommandsRegistry()
 
@@ -16,7 +32,8 @@ def say_hello() -> None:
     print("How can I help you?")
 
 
-@commands.register("add", args=["name", "phone number"])
+@commands.register("add")
+@input_error(error_msg="Give me name and phone number please.")
 def add_contact(args: CommandArgs, context: CommandContext) -> None:
     name, phone = args
     contacts = context["contacts"]
@@ -28,7 +45,8 @@ def add_contact(args: CommandArgs, context: CommandContext) -> None:
         print("Contact already exists.")
 
 
-@commands.register("change", args=["name", "new phone number"])
+@commands.register("change")
+@input_error(error_msg="Give me name and new phone number please.")
 def change_contact(args: CommandArgs, context: CommandContext) -> None:
     name, new_phone = args
     contacts = context["contacts"]
@@ -40,7 +58,8 @@ def change_contact(args: CommandArgs, context: CommandContext) -> None:
         print("Contact doesn't exist.")
 
 
-@commands.register("phone", args=["name"])
+@commands.register("phone")
+@input_error(error_msg="Give me name please.")
 def show_phone(args: CommandArgs, context: CommandContext) -> None:
     name = args[0]
     contacts = context["contacts"]
@@ -88,13 +107,6 @@ def main() -> None:
             commands.run(command, *args, contacts=contacts)
         except CommandNotFoundError:
             print("Invalid command.")
-        except InvalidCommandArgumentsError as e:
-            expected_args_str = (
-                ", ".join(e.expected_args[:-1]) + " and " + e.expected_args[-1]
-                if len(e.expected_args) > 1
-                else e.expected_args[0]
-            )
-            print(f"Give me {expected_args_str} please.")
         except Exception as e:
             print(f"Whoops, an unexpected error occurred: {e}")
 
